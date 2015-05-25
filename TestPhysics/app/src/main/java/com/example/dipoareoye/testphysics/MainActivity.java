@@ -14,6 +14,7 @@ import org.andengine.engine.options.WakeLockOptions;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.Scene;
+import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
@@ -22,6 +23,7 @@ import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.util.adt.color.Color;
+import org.andengine.util.debug.Debug;
 
 
 import static com.example.dipoareoye.testphysics.utils.Const.*;
@@ -56,15 +58,6 @@ public class MainActivity extends BaseGameActivity  {
 
     }
 
-    private void loadGfx()  {
-
-        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-        playerTextureAtlas = new BitmapTextureAtlas(getTextureManager(),128 ,128);
-        playerTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(playerTextureAtlas, this , "Puck.png" , 0,0);
-
-        playerTextureAtlas.load();
-    }
-
     @Override
     public void onCreateScene(OnCreateSceneCallback pOnCreateSceneCallback) throws IOException {
         //        this.scene = new Scene();
@@ -73,6 +66,8 @@ public class MainActivity extends BaseGameActivity  {
 //        this.physicsWorld = new PhysicsWorld(new Vector2(0,-SensorManager.GRAVITY_EARTH) , false);
 //        this.scene.registerUpdateHandler(physicsWorld);
 //        createWalls();
+
+        mEngine.registerUpdateHandler(new FPSLogger(0.5f , Debug.DebugLevel.DEBUG));
 
         SceneManager.getInstance().createSplashScene(pOnCreateSceneCallback);
 
@@ -102,6 +97,8 @@ public class MainActivity extends BaseGameActivity  {
             }
         }));
 
+
+
         pOnPopulateSceneCallback.onPopulateSceneFinished();
 
     }
@@ -112,9 +109,9 @@ public class MainActivity extends BaseGameActivity  {
         System.exit(0);
     }
 
-    protected PhysicsWorld getWorld(){
+    protected void onGoalConceded(){
 
-        return  physicsWorld;
+
     }
 
 }

@@ -4,6 +4,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.MassData;
+
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
@@ -16,27 +18,31 @@ import static com.example.dipoareoye.testphysics.utils.Const.*;
 /**
  * Created by dipoareoye on 04/05/15.
  */
-public class Mallet extends Sprite {
+public class Puck extends Sprite {
 
-    public final Body body;
+    protected final Body body;
     private Vector2 startPosition;
     private PhysicsWorld physicsWorld;
 
-
-    public Mallet(float pX, float pY, ITextureRegion pTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager , PhysicsWorld physicsWorld) {
+    public Puck(float pX, float pY, ITextureRegion pTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager, PhysicsWorld physicsWorld) {
         super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
 
         this.physicsWorld = physicsWorld;
 
         setScale(0.3f);
 
-        body = PhysicsFactory.createCircleBody(physicsWorld , this , BodyDef.BodyType.DynamicBody , MALLET_FIXTURE_DEF );
+        body = PhysicsFactory.createCircleBody(physicsWorld , this , BodyDef.BodyType.DynamicBody , PUCK_FIXTURE_DEF );
+
         physicsWorld.registerPhysicsConnector(new PhysicsConnector(this, body, true, true));
-        body.setUserData(USER_MALLET);
+
+        body.setUserData(USER_PUCK);
+
+//        MassData data = body.getMassData();
+//        data.mass = 0.1f;
+//        body.setMassData(data);
 
 
-        }
-
+    }
 
     public void resetPosition() {
 

@@ -1,7 +1,7 @@
 package com.example.dipoareoye.testphysics.manager;
 
 import com.example.dipoareoye.testphysics.scenes.BaseScene;
-import com.example.dipoareoye.testphysics.scenes.GameScence;
+import com.example.dipoareoye.testphysics.scenes.GameScene;
 import com.example.dipoareoye.testphysics.scenes.MenuOptionScene;
 import com.example.dipoareoye.testphysics.scenes.SplashScene;
 
@@ -97,7 +97,7 @@ public class SceneManager {
             {
                 mEngine.unregisterUpdateHandler(pTimerHandler);
                 ResourceManager.getInstance().loadGameResources();
-                gameScene = new GameScence();
+                gameScene = new GameScene();
                 setScene(gameScene);
             }
         }));

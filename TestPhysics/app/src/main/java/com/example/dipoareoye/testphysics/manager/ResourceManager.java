@@ -32,9 +32,6 @@ public class ResourceManager {
     public ITextureRegion puck_region;
     public ITextureRegion mallet_region;
 
-    // Game Texture
-    public BuildableBitmapTextureAtlas gameTextureAtlas;
-
     //Splash Regions
     public ITextureRegion splash_region;
 
@@ -45,6 +42,11 @@ public class ResourceManager {
 
     private BitmapTextureAtlas splashTextureAtlas;
     private BuildableBitmapTextureAtlas menuTextureAtlas;
+
+    private BitmapTextureAtlas malletTextureAtlas;
+    private BitmapTextureAtlas puckTextureAtlas;
+
+
 
     public static ResourceManager getInstance() {
 
@@ -78,6 +80,7 @@ public class ResourceManager {
 
     public void loadMenuResources()
     {
+
         loadMenuGraphics();
 //        loadMenuAudio();
 //        loadMenuFonts();
@@ -92,6 +95,7 @@ public class ResourceManager {
         start_game_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, mActivity, "create_game.png");
         join_game_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas , mActivity ,"join_game.png");
         view_stats_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, mActivity, "view_stats.png");
+
 
         try
         {
@@ -118,25 +122,19 @@ public class ResourceManager {
     }
 
     private void loadGameGraphics()
+
     {
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/game/");
-        gameTextureAtlas = new BuildableBitmapTextureAtlas(mActivity.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR);
 
-        puck_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, mActivity, "puck.png");
-        mallet_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, mActivity, "mallet.png", 3, 1);
+        malletTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 512, TextureOptions.BILINEAR);
+        puckTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager() , 128 , 128 , TextureOptions.BILINEAR);
 
-        complete_window_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "levelCompleteWindow.png");
-        complete_stars_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "star.png", 2, 1);
+        mallet_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(malletTextureAtlas,mActivity,"mallet.png" , 0 , 0);
 
-        try
-        {
-            this.gameTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 1, 0));
-            this.gameTextureAtlas.load();
-        }
-        catch (final TextureAtlasBuilderException e)
-        {
-            Debug.e(e);
-        }
+        puck_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(puckTextureAtlas , mActivity , "puck.png", 0 ,0 );
+
+        malletTextureAtlas.load();
+        puckTextureAtlas.load();
     }
 
     public void unloadMenuTextures(){

@@ -46,7 +46,7 @@ public class MenuOptionScene extends BaseScene implements IOnMenuItemClickListen
         menuChildScene.buildAnimations();
         menuChildScene.setBackgroundEnabled(false);
 
-        startServerItem.setPosition(mCamera.getWidth() / 2 , mCamera.getHeight() / 2  - Const.MENU_PADDING);
+        startServerItem.setPosition(mCamera.getWidth() / 2, mCamera.getHeight() / 2 - Const.MENU_PADDING);
         joinGameItem.setPosition(joinGameItem.getX(), startServerItem.getY() - Const.MENU_PADDING);
         statsMenuItem.setPosition(statsMenuItem.getX(), joinGameItem.getY() - Const.MENU_PADDING);
 
@@ -58,6 +58,7 @@ public class MenuOptionScene extends BaseScene implements IOnMenuItemClickListen
     @Override
     public void onBackKeyPressed() {
 
+
     }
 
     @Override
@@ -66,7 +67,7 @@ public class MenuOptionScene extends BaseScene implements IOnMenuItemClickListen
 
         {
             case MENU_START_SERVER:
-                Log.d(null,"startServerClicked");
+                Log.d(null, "startServerClicked");
                 SceneManager.getInstance().loadGameScene(mEngine);
                 return true;
             case MENU_JOIN_GAME:

@@ -67,6 +67,7 @@ public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOn
     @Override
     public void createScene() {
 
+        mActivity.setupConnection();
 
         createBackground();
         createPhysics();
@@ -97,28 +98,6 @@ public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOn
 
     private void showFrameRate(){
 
-        //        final FPSCounter fpsCounter = new FPSCounter();
-//        this.mEngine.registerUpdateHandler(fpsCounter);
-//
-//        this.mFontTexture = new BitmapTextureAtlas(ResourceManager.getInstance().mActivity.getTextureManager(), 2056, 2056);
-//        mFont = new Font(ResourceManager.getInstance().mActivity.getFontManager(),mFontTexture,Typeface.create(Typeface.DEFAULT,Typeface.BOLD), 32 , true ,Color.WHITE);
-//
-//        mFont.load();
-//
-//        final Text fpsText = new Text(100, 100, this.mFont, "FPS:", "FPS: XXXXXXXXXXXX".length(),ResourceManager.getInstance().mVertexBufferObjectManager);
-
-//        this.attachChild(fpsText);
-//
-//        this.registerUpdateHandler(new TimerHandler(1 / 20.0f, true, new ITimerCallback() {
-//            @Override
-//            public void onTimePassed(final TimerHandler pTimerHandler) {
-//                fpsText.setText("FPS: " + fpsCounter.getFPS());
-//            }
-//        }));
-
-//        this.mFontTexture = new BitmapTextureAtlas(ResourceManager.getInstance().mActivity.getTextureManager(),256, 256);
-//        this.mFont = new Font(ResourceManager.getInstance().mActivity.getFontManager(),
-//                this.mFontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 32, true, Color.BLACK);
 
     }
 
@@ -186,7 +165,6 @@ public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOn
                 final Body bodyB = fixtureB.getBody();
                 final String userDataB = (String) bodyB.getUserData();
 
-
 //                if ( userDataA.equals(USER_MALLET) && userDataB.equals(USER_PUCK)) {
 //
 //                    Log.e(null,"velocity = " + bodyB.getLinearVelocity());
@@ -194,8 +172,6 @@ public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOn
 //                    bodyB.setLinearVelocity(bodyA.getLinearVelocity());
 //
 //                }
-
-
 
             }
 
@@ -258,7 +234,6 @@ public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOn
     public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final ITouchArea pTouchArea, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 
         switch (pSceneTouchEvent.getAction()){
-
 
             case TouchEvent.ACTION_MOVE:
 

@@ -121,9 +121,7 @@ public class ResourceManager {
 
     }
 
-    private void loadGameGraphics()
-
-    {
+    private void loadGameGraphics()  {
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/game/");
 
         malletTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 512, TextureOptions.BILINEAR);
@@ -136,6 +134,12 @@ public class ResourceManager {
         malletTextureAtlas.load();
         puckTextureAtlas.load();
     }
+
+    public MainActivity getMainActivity(){
+
+        return mActivity;
+    }
+
 
     public void unloadMenuTextures(){
 

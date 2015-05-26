@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/AndEngine/AndEngine.iml" filepath="$PROJECT_DIR$/AndEngine/AndEngine.iml" />
       <module fileurl="file://$PROJECT_DIR$/TestPhysics.iml" filepath="$PROJECT_DIR$/TestPhysics.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bluetoothframework/bluetoothframework.iml" filepath="$PROJECT_DIR$/bluetoothframework/bluetoothframework.iml" />
     </modules>
   </component>
 </project>

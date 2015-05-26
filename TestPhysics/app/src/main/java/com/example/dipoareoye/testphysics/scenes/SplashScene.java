@@ -1,5 +1,9 @@
 package com.example.dipoareoye.testphysics.scenes;
 
+import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
+
+import com.example.dipoareoye.bluetoothframework.utils.StartDiscoverableModeActivity;
 import com.example.dipoareoye.testphysics.manager.SceneManager.SceneType;
 import com.example.dipoareoye.testphysics.utils.Const;
 

@@ -1,7 +1,18 @@
 package com.example.dipoareoye.testphysics;
 
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
+
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
+import android.provider.Settings;
+import android.util.Log;
+import android.widget.Toast;
+
+import com.example.dipoareoye.bluetoothframework.main.Connection;
+import com.example.dipoareoye.bluetoothframework.main.ConnectionService;
+import com.example.dipoareoye.bluetoothframework.main.SelectServerActivity;
+import com.example.dipoareoye.bluetoothframework.utils.Const;
+import com.example.dipoareoye.bluetoothframework.utils.StartDiscoverableModeActivity;
 import com.example.dipoareoye.testphysics.manager.ResourceManager;
 import com.example.dipoareoye.testphysics.manager.SceneManager;
 
@@ -12,31 +23,25 @@ import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.WakeLockOptions;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
-import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.util.FPSLogger;
-import org.andengine.extension.physics.box2d.PhysicsFactory;
-import org.andengine.extension.physics.box2d.PhysicsWorld;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
-import org.andengine.opengl.texture.region.TextureRegion;
-import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.BaseGameActivity;
-import org.andengine.util.adt.color.Color;
 import org.andengine.util.debug.Debug;
 
-
+import static com.example.dipoareoye.bluetoothframework.utils.Const.SERVER_LIST_RESULT_CODE;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.TYPE_SERVER;
 import static com.example.dipoareoye.testphysics.utils.Const.*;
 import java.io.IOException;
 
 public class MainActivity extends BaseGameActivity  {
 
-    private PhysicsWorld physicsWorld;
-    private Scene scene;
-    private BitmapTextureAtlas playerTextureAtlas;
-    private TextureRegion playerTextureRegion;
-    private SceneManager sceneManager;
+    public static final String TAG = "GAME_ACT";
+
+
     private Camera mCamera;
+    private int playerType;
+    private Connection mConnection;
+    private String opponentDevice;
 
     @Override
     public EngineOptions onCreateEngineOptions() {
@@ -88,6 +93,15 @@ public class MainActivity extends BaseGameActivity  {
 //
 //        physicsWorld.registerPhysicsConnector(new PhysicsConnector(sPuck , puckBody , true , false));
 
+        if(!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
+
+            Intent intent = new Intent();
+            intent.setClass(this,StartDiscoverableModeActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+
+        }
+
         mEngine.registerUpdateHandler(new TimerHandler(1f, new ITimerCallback()
         {
             public void onTimePassed(final TimerHandler pTimerHandler)
@@ -103,15 +117,93 @@ public class MainActivity extends BaseGameActivity  {
 
     }
 
+    public void setPlayerType(int playerType){
+
+        this.playerType = playerType;
+    }
+
+    public int getPlayerType (){
+
+        return playerType;
+    }
+
+    public void setupConnection(){
+
+        mConnection = new Connection(this, serviceReadyListener,connectionListener,disconnectListener , null);
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if ((resultCode == Activity.RESULT_OK) && (requestCode == SERVER_LIST_RESULT_CODE)) {
+            String device = data.getStringExtra(Const.EXTRA_BLUETOOTH_ADDRESS);
+
+            mConnection.connect(device);
+            opponentDevice = device;
+
+            return;
+        }
+    }
+
+    private Connection.OnConnectionServiceReadyListener serviceReadyListener = new Connection.OnConnectionServiceReadyListener() {
+        public void onConnectionServiceReady() {
+
+            Log.d(TAG, "onConnectionServiceReady ");
+
+            if (playerType == TYPE_SERVER) {
+
+                mConnection.startServer();
+            } else {
+
+                Intent serverListIntent = new Intent(ResourceManager.getInstance().getMainActivity(), SelectServerActivity.class);
+                startActivityForResult(serverListIntent, SERVER_LIST_RESULT_CODE);
+            }
+        }
+    };
+
+    private Connection.OnDeviceConnectionListener connectionListener = new Connection.OnDeviceConnectionListener() {
+
+        public void onDeviceConnection(String device) {
+
+            Log.d(TAG , "onDeviceConnected: "+device);
+            opponentDevice = device;
+//          initialise();
+
+        }
+    };
+
+
+    private Connection.OnConnectionLostListener disconnectListener = new Connection.OnConnectionLostListener() {
+
+
+        @Override
+        public void onConnectionLost(String device) {
+
+            Log.d(TAG, "onConnectionLost: "+device);
+
+
+        }
+
+    };
+
+
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+
+        stopService(new Intent(this, ConnectionService.class));
         System.exit(0);
+        super.onDestroy();
     }
 
-    protected void onGoalConceded(){
-
-
-    }
+//    private Connection.OnMessageReceivedListener messageReceivedListener = new Connection.OnMessageReceivedListener() {
+//
+//        @Override
+//        public void onMessageReceived( ) {
+//
+//            Log.d(TAG , "onMessageRecieved: ");
+//
+//        }
+//    };
 
 }

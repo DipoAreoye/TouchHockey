@@ -1,7 +1,10 @@
 package com.example.dipoareoye.testphysics.scenes;
 
+import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
 import android.util.Log;
 
+import com.example.dipoareoye.bluetoothframework.utils.StartDiscoverableModeActivity;
 import com.example.dipoareoye.testphysics.manager.SceneManager;
 import com.example.dipoareoye.testphysics.manager.SceneManager.SceneType;
 import com.example.dipoareoye.testphysics.utils.Const;
@@ -63,14 +66,22 @@ public class MenuOptionScene extends BaseScene implements IOnMenuItemClickListen
 
     @Override
     public boolean onMenuItemClicked(MenuScene pMenuScene, IMenuItem pMenuItem, float pMenuItemLocalX, float pMenuItemLocalY) {
+
         switch (pMenuItem.getID())
 
         {
             case MENU_START_SERVER:
                 Log.d(null, "startServerClicked");
+
+                mActivity.setPlayerType(0);// assign player as Server
                 SceneManager.getInstance().loadGameScene(mEngine);
+
                 return true;
             case MENU_JOIN_GAME:
+
+                mActivity.setPlayerType(1);// assign player as client
+                SceneManager.getInstance().loadGameScene(mEngine);
+
                 return true;
             case MENU_VIEW_STATS:
                 return true;

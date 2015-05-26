@@ -2,6 +2,7 @@ package com.example.dipoareoye.testphysics.scenes;
 
 import android.app.Activity;
 
+import com.example.dipoareoye.testphysics.MainActivity;
 import com.example.dipoareoye.testphysics.manager.ResourceManager;
 import com.example.dipoareoye.testphysics.manager.SceneManager;
 
@@ -16,7 +17,7 @@ public abstract class BaseScene extends Scene {
     //---------------------------------------------
 
     protected Engine mEngine;
-    protected Activity mActivity;
+    protected MainActivity mActivity;
     protected ResourceManager mResouceManager;
     protected VertexBufferObjectManager mVertexBufferMan;
     protected Camera mCamera;

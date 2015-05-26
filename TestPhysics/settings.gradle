@@ -1,1 +1,1 @@
-include ':app', ':AndEngine'
+include ':app', ':AndEngine', ':bluetoothframework'

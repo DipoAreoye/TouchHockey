@@ -4,15 +4,13 @@ package com.example.dipoareoye.testphysics;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
-import android.provider.Settings;
+import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.example.dipoareoye.bluetoothframework.main.Connection;
 import com.example.dipoareoye.bluetoothframework.main.ConnectionService;
 import com.example.dipoareoye.bluetoothframework.main.SelectServerActivity;
 import com.example.dipoareoye.bluetoothframework.utils.Const;
-import com.example.dipoareoye.bluetoothframework.utils.StartDiscoverableModeActivity;
 import com.example.dipoareoye.testphysics.manager.ResourceManager;
 import com.example.dipoareoye.testphysics.manager.SceneManager;
 
@@ -30,13 +28,15 @@ import org.andengine.util.debug.Debug;
 
 import static com.example.dipoareoye.bluetoothframework.utils.Const.SERVER_LIST_RESULT_CODE;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.TYPE_SERVER;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.*;
+
+
 import static com.example.dipoareoye.testphysics.utils.Const.*;
 import java.io.IOException;
 
 public class MainActivity extends BaseGameActivity  {
 
     public static final String TAG = "GAME_ACT";
-
 
     private Camera mCamera;
     private int playerType;
@@ -65,12 +65,6 @@ public class MainActivity extends BaseGameActivity  {
 
     @Override
     public void onCreateScene(OnCreateSceneCallback pOnCreateSceneCallback) throws IOException {
-        //        this.scene = new Scene();
-//        this.scene.setBackground(new Background(0,125,58));
-//
-//        this.physicsWorld = new PhysicsWorld(new Vector2(0,-SensorManager.GRAVITY_EARTH) , false);
-//        this.scene.registerUpdateHandler(physicsWorld);
-//        createWalls();
 
         mEngine.registerUpdateHandler(new FPSLogger(0.5f , Debug.DebugLevel.DEBUG));
 
@@ -81,26 +75,10 @@ public class MainActivity extends BaseGameActivity  {
     @Override
     public void onPopulateScene(Scene pScene, OnPopulateSceneCallback pOnPopulateSceneCallback) throws IOException {
 
-//        Sprite sPuck = new Sprite( CAM_WIDTH / 2 , CAM_HEIGHT / 2  ,
-//                playerTextureRegion , this.mEngine.getVertexBufferObjectManager() );
-//
-//       final FixtureDef PUCK_FIX = PhysicsFactory.createFixtureDef(10.0f , 1.0f , 0.0f);
-//
-//        Body puckBody = PhysicsFactory.createCircleBody(physicsWorld, sPuck, BodyDef.BodyType.DynamicBody, PUCK_FIX);
-//        sPuck.setHeight(66.0f);
-//        sPuck.setWidth(66.0f);
-//        this.scene.attachChild(sPuck);
-//
-//        physicsWorld.registerPhysicsConnector(new PhysicsConnector(sPuck , puckBody , true , false));
-
-        if(!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
-
-            Intent intent = new Intent();
-            intent.setClass(this,StartDiscoverableModeActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-
-        }
+        Intent discoverableIntent = new
+                Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+        startActivity(discoverableIntent);
 
         mEngine.registerUpdateHandler(new TimerHandler(1f, new ITimerCallback()
         {
@@ -129,7 +107,7 @@ public class MainActivity extends BaseGameActivity  {
 
     public void setupConnection(){
 
-        mConnection = new Connection(this, serviceReadyListener,connectionListener,disconnectListener , null);
+        mConnection = new Connection(this, serviceReadyListener,connectionListener,disconnectListener , msgRecievedListener);
 
     }
 
@@ -168,11 +146,26 @@ public class MainActivity extends BaseGameActivity  {
 
             Log.d(TAG , "onDeviceConnected: "+device);
             opponentDevice = device;
-//          initialise();
 
         }
     };
 
+
+    private Connection.OnMessageReceivedListener msgRecievedListener = new Connection.OnMessageReceivedListener() {
+
+        @Override
+        public void onMessageReceived(Bundle bundle) {
+
+            if(bundle.getInt(BUNDLE_TYPE) == PUCK_UPDATE){
+
+                SceneManager.getInstance().updateGameScene(bundle);
+            } else {
+
+                SceneManager.getInstance().updateScore();
+            }
+
+        }
+    };
 
     private Connection.OnConnectionLostListener disconnectListener = new Connection.OnConnectionLostListener() {
 
@@ -182,11 +175,9 @@ public class MainActivity extends BaseGameActivity  {
 
             Log.d(TAG, "onConnectionLost: "+device);
 
-
         }
 
     };
-
 
     @Override
     protected void onDestroy() {
@@ -196,14 +187,20 @@ public class MainActivity extends BaseGameActivity  {
         super.onDestroy();
     }
 
-//    private Connection.OnMessageReceivedListener messageReceivedListener = new Connection.OnMessageReceivedListener() {
-//
-//        @Override
-//        public void onMessageReceived( ) {
-//
-//            Log.d(TAG , "onMessageRecieved: ");
-//
-//        }
-//    };
+    public void sendPuckMessage(int posX, int velocityX , int velocityY){
+
+        Bundle bundle = new Bundle();
+        bundle.putInt(PUCK_POSITION, posX);
+        bundle.putInt(PUCK_VELOCITY_X, velocityX);
+        bundle.putInt(PUCK_VELOCITY_Y, velocityY);
+
+        mConnection.sendPuckMessage(bundle);
+    }
+
+    public void sendScoreUpdate() {
+
+        mConnection.sendScoreMessage();
+
+    }
 
 }

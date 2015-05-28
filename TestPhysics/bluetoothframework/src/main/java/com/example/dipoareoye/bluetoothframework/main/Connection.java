@@ -7,12 +7,12 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
 
+import static com.example.dipoareoye.bluetoothframework.utils.Const.DEVICE_NAME;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_CONN_FINISH;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_CONN_LOST;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_PUSHOUT_DATA;
@@ -20,6 +20,8 @@ import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_RECIEVED
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_REGISTER_CALLBACK;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_START_CLIENT;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_START_SERVER;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_UPDATE_SCORE;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.PUCK_VELOCITY_X;
 
 
 public class Connection {
@@ -35,7 +37,7 @@ public class Connection {
     }
 
     public interface OnMessageReceivedListener {
-//        public void onMessageReceived(GamePhotos ball);
+        void onMessageReceived(Bundle obj);
     }
 
     public interface OnConnectionLostListener {
@@ -72,8 +74,6 @@ public class Connection {
 
         mContext = ctx;
 
-        Looper.prepare();
-
         mCallbackHandler = new IncomingHandler();
 
         messenger = new Messenger(mCallbackHandler);
@@ -87,6 +87,16 @@ public class Connection {
 
                 if (mOnConnectionServiceReadyListener != null) {
                     mOnConnectionServiceReadyListener.onConnectionServiceReady();
+                }
+
+                Message msg = Message.obtain(null,
+                        MSG_REGISTER_CALLBACK);
+
+                msg.replyTo = messenger;
+                try {
+                    mService.send(msg);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
                 }
 
             }
@@ -107,8 +117,7 @@ public class Connection {
 
         try {
 
-            sendMessageToService(MSG_START_SERVER, null, null);
-            sendMessageToService(MSG_REGISTER_CALLBACK,messenger,null);
+            sendMessageToService(MSG_START_SERVER, messenger, null);
 
         } catch (RemoteException e) {
 
@@ -123,16 +132,14 @@ public class Connection {
         Log.d(TAG,"connect to :" +deviceName);
 
         if(!mBound) {
-
             return;
         }
 
-        Message msg = Message.obtain();
-        msg.what = MSG_START_CLIENT;
-        msg.obj = deviceName;
-
         try {
-            mService.send(msg);
+            Bundle bundle = new Bundle();
+            bundle.putString(DEVICE_NAME,deviceName);
+            sendMessageToService(MSG_START_CLIENT, messenger, bundle);
+
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -141,18 +148,37 @@ public class Connection {
 
     }
 
-    public void sendMessage() {
+    public void sendPuckMessage(Bundle data) {
 
         try {
 
             Message msg = Message.obtain();
             msg.what = MSG_PUSHOUT_DATA;
+            msg.setData(data);
+
+            Log.e(null, "Connection sendPuckMessage();" + msg.getData().getInt(PUCK_VELOCITY_X));
 
             mService.send(msg);
         } catch (RemoteException e) {
-            Log.e(TAG, "RemoteException in sendMessage", e);
+            Log.e(TAG, "RemoteException in sendPuckMessage", e);
         }
     }
+
+    public void sendScoreMessage() {
+
+        try {
+
+            Message msg = Message.obtain();
+            msg.what = MSG_UPDATE_SCORE;
+
+            Log.e(null, "Connection sendPuckMessage();" + msg.getData().getInt(PUCK_VELOCITY_X));
+
+            mService.send(msg);
+        } catch (RemoteException e) {
+            Log.e(TAG, "RemoteException in sendPuckMessage", e);
+        }
+    }
+
 
     public void sendMessageToService(int what,Messenger replyto, Bundle b) throws RemoteException {
 
@@ -180,17 +206,18 @@ public class Connection {
 
             case MSG_CONN_FINISH :
 
-                Log.d(TAG,"processMessage: Device connected : "+msg.obj);
-                mOnDeviceConnectionListener.onDeviceConnection((String) msg.obj);
+                Log.d(TAG,"processMessage: Device connected : "+msg.getData().getString(DEVICE_NAME));
+                mOnDeviceConnectionListener.onDeviceConnection(msg.getData().getString(DEVICE_NAME));
 
                 break;
             case MSG_CONN_LOST :
-                Log.d(TAG,"processMessage: Connection Lost : "+msg.obj);
-                mOnDisconnectListenter.onConnectionLost((String) msg.obj);
+                Log.d(TAG,"processMessage: Connection Lost : "+msg.getData().getString(DEVICE_NAME));
+                mOnDisconnectListenter.onConnectionLost(msg.getData().getString(DEVICE_NAME));
                 break;
             case MSG_RECIEVED :
                 Log.d(TAG, "processMessage: Message Recieved :" );
-//                mOnMsgRecievedListener.onMessageReceived((GamePhotos) msg.obj);
+                mOnMsgRecievedListener.onMessageReceived(msg.getData());
+                break;
             default:
                 break;
 

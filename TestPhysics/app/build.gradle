@@ -26,4 +26,5 @@ dependencies {
     compile files('libs/andenginephysicsbox2dextension.jar')
     compile files('libs/physicsbox2d_so_files.jar')
     compile project(':bluetoothframework')
+
 }

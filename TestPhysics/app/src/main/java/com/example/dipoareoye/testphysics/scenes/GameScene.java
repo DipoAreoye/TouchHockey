@@ -1,20 +1,10 @@
 package com.example.dipoareoye.testphysics.scenes;
 
-import android.graphics.Typeface;
-import android.text.style.MaskFilterSpan;
 import android.util.Log;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.Contact;
-import com.badlogic.gdx.physics.box2d.ContactImpulse;
-import com.badlogic.gdx.physics.box2d.ContactListener;
-import com.badlogic.gdx.physics.box2d.Fixture;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.Manifold;
-import com.badlogic.gdx.physics.box2d.joints.MouseJoint;
-import com.badlogic.gdx.physics.box2d.joints.MouseJointDef;
 import com.example.dipoareoye.testphysics.manager.ResourceManager;
 import com.example.dipoareoye.testphysics.manager.SceneManager;
 import com.example.dipoareoye.testphysics.sprites.Mallet;
@@ -22,29 +12,19 @@ import com.example.dipoareoye.testphysics.sprites.Puck;
 import com.example.dipoareoye.testphysics.utils.Const;
 
 import org.andengine.engine.handler.IUpdateHandler;
-import org.andengine.engine.handler.timer.ITimerCallback;
-import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnAreaTouchListener;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
-import org.andengine.entity.shape.IShape;
-import org.andengine.entity.sprite.AnimatedSprite;
-import org.andengine.entity.text.Text;
-import org.andengine.entity.util.FPSCounter;
-import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
-import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
 import org.andengine.input.touch.TouchEvent;
 
 import static com.example.dipoareoye.testphysics.utils.Const.CAM_HEIGHT;
 import static com.example.dipoareoye.testphysics.utils.Const.CAM_WIDTH;
-import static com.example.dipoareoye.testphysics.utils.Const.USER_MALLET;
-import static com.example.dipoareoye.testphysics.utils.Const.USER_PUCK;
 
 import  static com.example.dipoareoye.testphysics.utils.Const.*;
 
@@ -52,52 +32,75 @@ import  static com.example.dipoareoye.testphysics.utils.Const.*;
 /**
  * Created by dipoareoye on 04/05/15.
  */
-public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOnAreaTouchListener {
+public class GameScene extends BaseScene  implements IOnAreaTouchListener,IOnSceneTouchListener {
+
+    public final static int TYPE_SERVER = 0 , TYPE_CLIENT = 1;
 
     private PhysicsWorld physicsWorld;
-    private MouseJoint mMouseJointActive;
 
     private Mallet mallet;
     private Puck puck;
 
-    private MouseJoint mjActive;
     private Body mGroundBody;
-    private Body body;
+    private Body malletBody;
+
+    private Body puckBody;
+
+    private int playerType;
+
+    private int oppenentScore = 0;
+    private int myScore = 0;
+
+    private boolean puckOnScreen;
 
     @Override
     public void createScene() {
 
-        mActivity.setupConnection();
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                mActivity.setupConnection();
+            }
+        });
+
+        playerType =  mActivity.getPlayerType();
 
         createBackground();
         createPhysics();
         createWalls();
         createSprites();
 
-        setOnSceneTouchListener(this);
         setOnAreaTouchListener(this);
+        setOnSceneTouchListener(this);
 
         this.registerUpdateHandler(new IUpdateHandler() {
             public void reset() {
             }
+
             public void onUpdate(float pSecondsElapsed) {
 
-                if (puck.getY() < 0) {
+                //Puck has reached screen boundary
+                if (puck.getY() > (CAM_HEIGHT + CAM_HEIGHT / 10)) {
 
-                    puck.setX(CAM_HEIGHT / 2);
-                    puck.setY(CAM_WIDTH / 2);
+                    mActivity.sendPuckMessage((int) (puck.getX()), (int) (puck.getVelocityVector().x * 10000.0f),
+                            (int) (puck.getVelocityVector().y * 10000.0f));
+
+                    puckBody.setTransform(puck.getX(), ((CAM_HEIGHT + CAM_HEIGHT / 10) / PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT), puckBody.getAngle());
+                    puckBody.setLinearVelocity(0, 0);
 
                 }
 
+                if (puck.getY() + puck.getHeight() / 2 < 0) {
 
+                    mActivity.sendScoreUpdate();
+                    oppenentScore++;
+                    puck.resetPosition();
+
+                }
 
             }
         });
-
-    }
-
-    private void showFrameRate(){
-
 
     }
 
@@ -131,7 +134,6 @@ public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOn
     private void createPhysics() {
 
         physicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
-        physicsWorld.setContactListener(createContactListener());
         registerUpdateHandler(physicsWorld);
 
     }
@@ -141,58 +143,31 @@ public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOn
         mallet = new Mallet(CAM_WIDTH / 2, CAM_HEIGHT / 4 , ResourceManager.getInstance().mallet_region,
                 ResourceManager.getInstance().mVertexBufferObjectManager, physicsWorld);
 
-        puck = new Puck(CAM_WIDTH / 2, CAM_HEIGHT / 2, ResourceManager.getInstance().puck_region,
-                ResourceManager.getInstance().mVertexBufferObjectManager, physicsWorld);
+        malletBody = mallet.body;
 
-        this.attachChild(mallet);
+        if(playerType == TYPE_SERVER) {
+
+            puckOnScreen = true;
+
+            puck = new Puck(CAM_WIDTH / 2, CAM_HEIGHT / 2, ResourceManager.getInstance().puck_region,
+                    ResourceManager.getInstance().mVertexBufferObjectManager, physicsWorld);
+
+        } else {
+
+            puckOnScreen = false;
+
+            puck = new Puck(CAM_WIDTH / 2,   CAM_HEIGHT + CAM_HEIGHT / 10 , ResourceManager.getInstance().puck_region,
+                    ResourceManager.getInstance().mVertexBufferObjectManager, physicsWorld);
+
+        }
+
+        puckBody = puck.body;
+
         this.attachChild(puck);
+        this.attachChild(mallet);
+
         this.registerTouchArea(mallet);
         this.setTouchAreaBindingOnActionDownEnabled(true);
-    }
-
-    private ContactListener createContactListener(){
-
-        ContactListener contactListener = new ContactListener() {
-
-            @Override
-            public void beginContact(Contact contact) {
-
-                final Fixture fixtureA = contact.getFixtureA();
-                final Body bodyA = fixtureA.getBody();
-                final String userDataA = (String) bodyA.getUserData();
-
-                final Fixture fixtureB = contact.getFixtureB();
-                final Body bodyB = fixtureB.getBody();
-                final String userDataB = (String) bodyB.getUserData();
-
-//                if ( userDataA.equals(USER_MALLET) && userDataB.equals(USER_PUCK)) {
-//
-//                    Log.e(null,"velocity = " + bodyB.getLinearVelocity());
-//
-//                    bodyB.setLinearVelocity(bodyA.getLinearVelocity());
-//
-//                }
-
-            }
-
-            @Override
-            public void endContact(Contact contact) {
-
-            }
-
-            @Override
-            public void preSolve(Contact contact, Manifold manifold) {
-
-            }
-
-            @Override
-            public void postSolve(Contact contact, ContactImpulse contactImpulse) {
-
-            }
-        };
-
-        return contactListener;
-
     }
 
     @Override
@@ -216,13 +191,20 @@ public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOn
         if(this.physicsWorld != null) {
             switch(pSceneTouchEvent.getAction()) {
                 case TouchEvent.ACTION_DOWN:
+
+//                    Log.e(null, "YOOO SCENE DOWN");
+//                    malletBody.setLinearVelocity((pSceneTouchEvent.getX()- malletBody.getPosition().x * PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT),
+//                            (pSceneTouchEvent.getY()- malletBody.getPosition().y * PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT));
                     return true;
                 case TouchEvent.ACTION_MOVE:
-                    body.setLinearVelocity((pSceneTouchEvent.getX()-body.getPosition().x * PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT*10),
-                            (pSceneTouchEvent.getY()-body.getPosition().y * PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT*10));
+
+                    malletBody.setLinearVelocity(0, 0);
+                    malletBody.setLinearVelocity((pSceneTouchEvent.getX()- malletBody.getPosition().x * PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT),
+                            (pSceneTouchEvent.getY()- malletBody.getPosition().y * PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT));
+                    return true;
                 case TouchEvent.ACTION_UP:
 
-                    body.setLinearVelocity(0,0);
+                    malletBody.setLinearVelocity(0, 0);
                     return true;
             }
             return false;
@@ -237,14 +219,22 @@ public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOn
 
             case TouchEvent.ACTION_MOVE:
 
-                final Mallet face = (Mallet) pTouchArea;
-                body = this.physicsWorld.getPhysicsConnectorManager().findBodyByShape(face);
+               float diffX = Math.abs(pTouchAreaLocalX - mallet.getX());
+               float diffY = Math.abs(pTouchAreaLocalY - mallet.getY());
 
-                body.setLinearVelocity((pSceneTouchEvent.getX()-body.getPosition().x * PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT),
-                        (pSceneTouchEvent.getY()-body.getPosition().y * PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT));
+                malletBody.setLinearVelocity(0, 0);
+
+                if ( diffX > 15 && diffY > 15){
+
+                    malletBody.setLinearVelocity((pSceneTouchEvent.getX()- malletBody.getPosition().x * PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT),
+                            (pSceneTouchEvent.getY()- malletBody.getPosition().y * PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT));
+                }
+
+
                 return true;
             case TouchEvent.ACTION_UP:
-                body.setLinearVelocity(0,0);
+                malletBody.setLinearVelocity(0, 0);
+                return true;
 
         }
 
@@ -252,33 +242,19 @@ public class GameScene extends BaseScene  implements IOnSceneTouchListener , IOn
 
     }
 
+    public void spawnPuck(int posx , int velocX, int velocY) {
 
-    public MouseJoint createMouseJoint(final IShape pFace, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+        Log.e(null, "spawnPuckX: " + posx + "spawnPuckY: " + velocY);
 
-        final Body body = this.physicsWorld.getPhysicsConnectorManager().findBodyByShape(pFace);
-
-        final MouseJointDef mouseJointDef = new MouseJointDef();
-
-        Vector2 v = body.getWorldPoint(new Vector2(pTouchAreaLocalX/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT * 0.1f,
-                pTouchAreaLocalY/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT * 0.1f));
+        puck.updatePosition(posx, velocX, velocY);
 
 
-        mouseJointDef.bodyA = this.mGroundBody;
-        mouseJointDef.bodyB = body;
-        mouseJointDef.dampingRatio = 0.2f;
-        mouseJointDef.frequencyHz = 30000f;
-        mouseJointDef.maxForce = (10000000.0f);
 
-        mouseJointDef.collideConnected = true;
-
-        mouseJointDef.target.set(v);
-
-        return (MouseJoint) this.physicsWorld.createJoint(mouseJointDef);
     }
 
+    public void updateScore(){
 
-//    @Override
-//    public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
-//        return false;
-//    }
+        myScore++;
+    }
+
 }

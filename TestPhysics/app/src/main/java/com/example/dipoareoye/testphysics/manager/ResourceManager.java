@@ -46,8 +46,6 @@ public class ResourceManager {
     private BitmapTextureAtlas malletTextureAtlas;
     private BitmapTextureAtlas puckTextureAtlas;
 
-
-
     public static ResourceManager getInstance() {
 
         return INSTANCE;
@@ -62,8 +60,8 @@ public class ResourceManager {
 
     }
 
-    public void loadSplashScreen()
-    {
+    public void loadSplashScreen()  {
+
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/splash/");
 
         splashTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 1024, 1024, TextureOptions.DEFAULT);
@@ -72,14 +70,13 @@ public class ResourceManager {
         splashTextureAtlas.load();
     }
 
-    public void unloadSplashScreen()
-    {
+    public void unloadSplashScreen() {
+
         splashTextureAtlas.unload();
         splash_region = null;
     }
 
-    public void loadMenuResources()
-    {
+    public void loadMenuResources()  {
 
         loadMenuGraphics();
 //        loadMenuAudio();
@@ -139,7 +136,6 @@ public class ResourceManager {
 
         return mActivity;
     }
-
 
     public void unloadMenuTextures(){
 

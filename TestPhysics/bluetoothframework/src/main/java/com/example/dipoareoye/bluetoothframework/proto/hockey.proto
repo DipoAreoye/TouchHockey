@@ -1,0 +1,20 @@
+
+option java_package = "com.example.dipoareoye.bluetoothframework.proto";
+option java_outer_classname = "GameStateProto";
+
+message GameState {
+
+    optional int32 posX = 1;
+    optional int32 VectorX = 2;
+    optional int32 VectorY = 3;
+   	required MessageType type = 4;
+
+    enum MessageType {
+
+    PUCK = 0;
+    SCORE = 1;
+
+  }
+
+}
+

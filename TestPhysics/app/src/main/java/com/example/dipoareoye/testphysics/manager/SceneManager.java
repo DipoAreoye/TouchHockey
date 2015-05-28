@@ -1,5 +1,8 @@
 package com.example.dipoareoye.testphysics.manager;
 
+import android.os.Bundle;
+import android.util.Log;
+
 import com.example.dipoareoye.testphysics.scenes.BaseScene;
 import com.example.dipoareoye.testphysics.scenes.GameScene;
 import com.example.dipoareoye.testphysics.scenes.MenuOptionScene;
@@ -9,6 +12,10 @@ import org.andengine.engine.Engine;
 import org.andengine.engine.handler.timer.ITimerCallback;
 import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.ui.IGameInterface;
+
+import static com.example.dipoareoye.testphysics.utils.Const.*;
+
+import static com.example.dipoareoye.bluetoothframework.utils.Const.*;
 
 public class SceneManager {
 
@@ -67,11 +74,6 @@ public class SceneManager {
 
     }
 
-    public void createGameScene (){
-
-
-    }
-
     private void disposeSplashScene() {
 
         ResourceManager.getInstance().unloadSplashScreen();
@@ -101,6 +103,19 @@ public class SceneManager {
                 setScene(gameScene);
             }
         }));
+
+    }
+
+    public void updateGameScene(Bundle bundle ){
+
+            ((GameScene)gameScene).spawnPuck(bundle.getInt(PUCK_POSITION),
+                    bundle.getInt(PUCK_VELOCITY_X) , bundle.getInt(PUCK_VELOCITY_Y));
+
+    }
+
+    public void updateScore(){
+
+        ((GameScene)gameScene).updateScore();
 
     }
 

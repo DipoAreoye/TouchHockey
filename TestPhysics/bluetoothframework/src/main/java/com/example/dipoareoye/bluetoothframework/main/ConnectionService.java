@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -13,14 +14,18 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
 
+import com.example.dipoareoye.bluetoothframework.proto.GameStateProto;
 import com.example.dipoareoye.bluetoothframework.utils.Const;
 import com.example.dipoareoye.bluetoothframework.utils.ServiceConnectionCallback;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
+import static com.example.dipoareoye.bluetoothframework.utils.Const.BUNDLE_TYPE;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.DEVICE_NAME;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_CONN_FINISH;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_CONN_LOST;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_EMPTY;
@@ -28,8 +33,15 @@ import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_PUSHOUT_
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_RECIEVED;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_REGISTER_ACTIVITY;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_REGISTER_CALLBACK;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_SCORE_RECIEVED;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_START_CLIENT;
 import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_START_SERVER;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.MSG_UPDATE_SCORE;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.PUCK_POSITION;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.PUCK_UPDATE;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.PUCK_VELOCITY_X;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.PUCK_VELOCITY_Y;
+import static com.example.dipoareoye.bluetoothframework.utils.Const.SCORE_UPDATE;
 
 /**
  * Created by dipoareoye on 12/04/15.
@@ -71,6 +83,12 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
 
     }
 
+    @Override
+    public void onCreate(){
+        super.onCreate();
+        init();
+    }
+
     public static ConnectionService getInstance(){
         return mConnService;
     }
@@ -87,7 +105,6 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        init();
         handleIntent(intent);
         return START_STICKY;
     }
@@ -150,21 +167,35 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
         if(mCallbackMessenger == null)
             return;
 
-        sendCallback(MSG_CONN_FINISH,deviceAddress);
+        Bundle bundle = new Bundle();
+        bundle.putString(DEVICE_NAME,deviceAddress);
+
+        sendCallback(MSG_CONN_FINISH, bundle);
     }
 
     @Override
     public void onConnectionLost(String deviceAddress) {
-        sendCallback(MSG_CONN_LOST,deviceAddress);
+
+        Bundle bundle = new Bundle();
+        bundle.putString(DEVICE_NAME,deviceAddress);
+
+        sendCallback(MSG_CONN_LOST,bundle);
+
+
     }
 
-    public void sendCallback(int what, Object details ){
+    public void sendCallback(int what, Bundle bundle ){
 
-        if (mCallbackMessenger == null)
-            return;;
+        if (mCallbackMessenger == null){
 
-        Message msg = mHandler.obtainMessage(what);
-        msg.obj = details;
+            Log.e(null,"mcallback is null");
+            return;
+
+        }
+
+        Message msg = mHandler.obtainMessage();
+        msg.what = what;
+        msg.setData(bundle);
 
         try {
 
@@ -172,10 +203,53 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
 
         } catch (RemoteException e) {
 
-            Log.e(TAG,"onDeviceConnected : error sending callback - " +e);
+            Log.e(TAG,"sendCallBack : error sending callback - " +e);
 
         }
 
+    }
+
+    private void sendPuckMessage(Bundle data){
+
+        try {
+
+            if (mBtSocket != null) {
+
+                OutputStream outStream = mBtSocket.getOutputStream();
+
+                GameStateProto.GameState.Builder state = GameStateProto.GameState.newBuilder()
+                        .setType(GameStateProto.GameState.MessageType.PUCK).setPosX(data.getInt(PUCK_POSITION))
+                            .setVectorX(data.getInt(PUCK_VELOCITY_X)).setVectorY(data.getInt(PUCK_VELOCITY_Y));
+
+                state.build().writeDelimitedTo(outStream);
+
+                Log.d(TAG,"position x "+ state.getPosX() + "message out x "
+                        + state.getVectorX() +" MESSAGE Y: " + state.getVectorY());
+                return;
+            }
+        } catch (IOException e) {
+
+            Log.e(TAG,"Send message" + e.toString());
+        }
+        return;
+    }
+
+    private void sendScoreMessage(){
+
+        try {
+
+            OutputStream outStream = mBtSocket.getOutputStream();
+
+            GameStateProto.GameState.Builder state = GameStateProto.GameState.newBuilder()
+                    .setType(GameStateProto.GameState.MessageType.SCORE);
+
+            state.build().writeDelimitedTo(outStream);
+
+            Log.d(TAG, "send score: ");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -196,33 +270,36 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
                break;
            case MSG_REGISTER_ACTIVITY :
 
-                Log.d(TAG, "processMessage : registerActivity()" );
-                registerActivity((SelectServerActivity) msg.obj ,(msg.arg1 == 1) );
+                Log.d(TAG, "processMessage : registerActivity()");
+                registerActivity((SelectServerActivity) msg.obj, (msg.arg1 == 1));
 
                break;
            case MSG_REGISTER_CALLBACK :
-               Log.d(TAG ,"processMessage : registerCallback" );
 
+               Log.d(TAG, "processMessage: registerCallback");
                registerCallback(msg.replyTo);
                break;
            case MSG_START_SERVER :
 
-                Log.d(TAG, "processMessage : startServer()" );
+                Log.d(TAG, "processMessage : startServer()");
                 startServer(msg.getData().getString(Const.APP_NAME));
-
-               break;
+                break;
            case MSG_START_CLIENT :
 
-               String deviceName = (String) msg.obj;
-               Log.d(TAG, "processMessage : onStartClient()" +deviceName );
+               String deviceName = msg.getData().getString(DEVICE_NAME);
+               Log.d(TAG, "processMessage : onStartClient()" + deviceName);
                connectToServer(deviceName);
-
                break;
            case MSG_PUSHOUT_DATA :
 
                 Log.d(TAG, "processMessage : onPushoutMsg");
-                sendMessage();
+                sendPuckMessage(msg.getData());
+
                break;
+           case MSG_UPDATE_SCORE :
+
+               Log.d(TAG, "processMessage: onScoreUpdate");
+               sendScoreMessage();
            default:
                break;
 
@@ -240,30 +317,6 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
     private void registerCallback(Messenger callback) {
 
         mCallbackMessenger = callback;
-    }
-
-    public void sendMessage() {
-
-        try {
-
-            if (mBtSocket != null) {
-                OutputStream outStream = mBtSocket.getOutputStream();
-//
-//                GamePhotos.Balll.Builder ballAction =
-//                        GamePhotos.Balll.newBuilder().setPosx(5)
-//                        .setPosy(6);
-
-//                ballAction.build().writeDelimitedTo(outStream);
-
-                Log.d(TAG,"sendMessage: " );
-
-                return;
-            }
-        } catch (IOException e) {
-
-            Log.e(TAG,"Send message" + e.toString());
-        }
-        return;
     }
 
     private void startServer(String appName){
@@ -286,9 +339,7 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
 
             try {
 
-                Log.d(TAG, "startServer : socket opening");
-
-                BluetoothServerSocket serverSocket = mBtAdapter
+                 BluetoothServerSocket serverSocket = mBtAdapter
                         .listenUsingRfcommWithServiceRecord(appName, mUuid);
 
                 mBtSocket = serverSocket.accept();
@@ -299,7 +350,7 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
 
                 mBtDeviceAddress = mBtSocket.getRemoteDevice().getAddress();
 
-                Thread btStream = new Thread(new ServerThread(mBtDeviceAddress));
+                Thread btStream = new Thread(new BtStream(mBtDeviceAddress));
                 btStream.start();
 
             } catch (IOException e) {
@@ -318,6 +369,7 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
 
         public BtStream (String address){
             this.address = address;
+
         }
 
         @Override
@@ -325,18 +377,39 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
 
             try {
 
+                InputStream inputStream;
+
                 while (true){
 
                     Log.d(TAG,"BtStreamThread Running ....");
 
-                    InputStream inputStream = mBtSocket.getInputStream();
-//                    GamePhotos.Balll ball =  GamePhotos.Balll.parseDelimitedFrom(inputStream);
-//                    Log.e(TAG, "Bt Stream recieved : ball x is : " + ball.getPosx() + "+" + ball.getPosy());
-//
-//                    sendCallback(MSG_RECIEVED ,ball);
+                    inputStream = mBtSocket.getInputStream();
+
+                    GameStateProto.GameState state = GameStateProto.GameState.parseDelimitedFrom(inputStream);
+
+                    Bundle bundle = new Bundle();
+
+                    if(state.getType().equals(GameStateProto.GameState.MessageType.PUCK)) {
+
+                        Log.e(TAG, "Bt Stream recieved : ball x is : " + state.getPosX() + "+" + state.getVectorX() / 10000);
+
+                        bundle.putInt(BUNDLE_TYPE,PUCK_UPDATE);
+                        bundle.putInt(PUCK_POSITION,state.getPosX());
+                        bundle.putInt(PUCK_VELOCITY_X,state.getVectorX() / 10000);
+                        bundle.putInt(PUCK_VELOCITY_Y,state.getVectorY() / 10000);
+
+                        sendCallback(MSG_RECIEVED, bundle);
+
+                    } else {
+
+                        Log.e(TAG, "goal scored");
+
+                        sendCallback(MSG_SCORE_RECIEVED,null);
+                    }
+
                 }
-//            } catch (InvalidProtocolBufferException e) {
-//                Log.e(TAG,"BtStream: " + e.toString());
+            } catch (InvalidProtocolBufferException e) {
+                Log.e(TAG,"BtStream: " + e.toString());
             } catch (IOException e ) {
                 Log.e(TAG,"BtStream: " + e.toString());
             }
@@ -395,6 +468,7 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
         }
         return null;
     }
+
 
 
 }

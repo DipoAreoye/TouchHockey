@@ -34,7 +34,6 @@ public class Mallet extends Sprite {
         physicsWorld.registerPhysicsConnector(new PhysicsConnector(this, body, true, true));
         body.setUserData(USER_MALLET);
 
-
         }
 
 

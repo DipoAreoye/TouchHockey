@@ -1,10 +1,13 @@
 package com.example.dipoareoye.testphysics.manager;
 
+import android.graphics.Typeface;
+
 import com.example.dipoareoye.testphysics.MainActivity;
+import com.example.dipoareoye.testphysics.utils.Const;
 
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.Camera;
-import org.andengine.opengl.texture.ITexture;
+import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -31,6 +34,8 @@ public class ResourceManager {
     //Game Regions
     public ITextureRegion puck_region;
     public ITextureRegion mallet_region;
+    public ITextureRegion score_circle_region;
+    public Font gameScoreFont;
 
     //Splash Regions
     public ITextureRegion splash_region;
@@ -40,11 +45,15 @@ public class ResourceManager {
     public ITextureRegion join_game_region;
     public ITextureRegion view_stats_region;
 
+
     private BitmapTextureAtlas splashTextureAtlas;
     private BuildableBitmapTextureAtlas menuTextureAtlas;
 
     private BitmapTextureAtlas malletTextureAtlas;
     private BitmapTextureAtlas puckTextureAtlas;
+    public BitmapTextureAtlas scoreTextureAtlas;
+
+    private BitmapTextureAtlas gameScoreFontTexture;
 
     public static ResourceManager getInstance() {
 
@@ -78,7 +87,7 @@ public class ResourceManager {
 
     public void loadMenuResources()  {
 
-        loadMenuGraphics();
+          loadMenuGraphics();
 //        loadMenuAudio();
 //        loadMenuFonts();
     }
@@ -118,27 +127,38 @@ public class ResourceManager {
 
     }
 
-    private void loadGameGraphics()  {
+    private void loadGameGraphics() {
+
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/game/");
 
         malletTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 512, 512, TextureOptions.BILINEAR);
-        puckTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager() , 128 , 128 , TextureOptions.BILINEAR);
+        puckTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(), 128, 128, TextureOptions.BILINEAR);
+        scoreTextureAtlas = new BitmapTextureAtlas(mActivity.getTextureManager(),64,64, TextureOptions.BILINEAR);
 
-        mallet_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(malletTextureAtlas,mActivity,"mallet.png" , 0 , 0);
+        mallet_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(malletTextureAtlas, mActivity, "mallet.png", 0, 0);
+        puck_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(puckTextureAtlas, mActivity, "puck.png", 0, 0);
+        score_circle_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(scoreTextureAtlas,mActivity,"score_circle.png",0,0);
 
-        puck_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(puckTextureAtlas , mActivity , "puck.png", 0 ,0 );
+        this.gameScoreFontTexture = new BitmapTextureAtlas(this.mEngine.getTextureManager(), 32, 32);
+        this.gameScoreFont = new Font(this.mEngine.getFontManager(), this.gameScoreFontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 16, true, Const.SCORE_CIRCLE_ON);
 
+        gameScoreFont.load();
         malletTextureAtlas.load();
         puckTextureAtlas.load();
+        scoreTextureAtlas.load();
+
     }
 
     public MainActivity getMainActivity(){
 
         return mActivity;
+
     }
 
     public void unloadMenuTextures(){
 
 
     }
+
+
 }

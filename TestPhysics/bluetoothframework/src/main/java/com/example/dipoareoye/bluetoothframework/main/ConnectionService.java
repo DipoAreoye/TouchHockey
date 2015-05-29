@@ -398,14 +398,15 @@ public class ConnectionService extends Service implements ServiceConnectionCallb
                         bundle.putInt(PUCK_VELOCITY_X,state.getVectorX() / 10000);
                         bundle.putInt(PUCK_VELOCITY_Y,state.getVectorY() / 10000);
 
-                        sendCallback(MSG_RECIEVED, bundle);
 
                     } else {
 
                         Log.e(TAG, "goal scored");
 
-                        sendCallback(MSG_SCORE_RECIEVED,null);
+                        bundle.putInt(BUNDLE_TYPE,SCORE_UPDATE);
                     }
+
+                    sendCallback(MSG_RECIEVED, bundle);
 
                 }
             } catch (InvalidProtocolBufferException e) {

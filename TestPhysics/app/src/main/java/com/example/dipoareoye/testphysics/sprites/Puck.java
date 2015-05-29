@@ -49,15 +49,15 @@ public class Puck extends Sprite {
 
     public void updatePosition(float posx, float velx, float vely){
 
-        Log.e(null,"transformed x = " + posx / PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT);//+;
+        Log.e(null,"transformed x = " + posx / PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT);
 
         float x = (((posx - CAM_WIDTH) * -1.0f) / PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT);
         body.setTransform(x,(CAM_HEIGHT / PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT),body.getAngle());
 
-        body.setLinearVelocity(
-                -velx,-vely);
+        body.setLinearVelocity(-velx,-vely);
 
         Log.i(null, "X position :" + getX());
+
 
     }
 
@@ -67,7 +67,5 @@ public class Puck extends Sprite {
         body.setLinearVelocity(0,0);
 
     }
-
-
 
 }

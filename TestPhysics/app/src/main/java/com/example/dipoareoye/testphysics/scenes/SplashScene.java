@@ -38,7 +38,6 @@ public class SplashScene extends BaseScene {
         return;
     }
 
-
     @Override
     public SceneType getSceneType() {
         return SceneType.SPLASH;

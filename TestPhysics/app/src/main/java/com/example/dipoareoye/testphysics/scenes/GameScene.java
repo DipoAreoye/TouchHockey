@@ -9,6 +9,7 @@ import com.example.dipoareoye.testphysics.manager.ResourceManager;
 import com.example.dipoareoye.testphysics.manager.SceneManager;
 import com.example.dipoareoye.testphysics.sprites.Mallet;
 import com.example.dipoareoye.testphysics.sprites.Puck;
+import com.example.dipoareoye.testphysics.sprites.ScoreCircle;
 import com.example.dipoareoye.testphysics.utils.Const;
 
 import org.andengine.engine.handler.IUpdateHandler;
@@ -18,10 +19,15 @@ import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
+import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.util.adt.color.Color;
+
+import java.lang.reflect.Array;
 
 import static com.example.dipoareoye.testphysics.utils.Const.CAM_HEIGHT;
 import static com.example.dipoareoye.testphysics.utils.Const.CAM_WIDTH;
@@ -40,6 +46,7 @@ public class GameScene extends BaseScene  implements IOnAreaTouchListener,IOnSce
 
     private Mallet mallet;
     private Puck puck;
+    private ScoreCircle circle;
 
     private Body mGroundBody;
     private Body malletBody;
@@ -48,10 +55,14 @@ public class GameScene extends BaseScene  implements IOnAreaTouchListener,IOnSce
 
     private int playerType;
 
-    private int oppenentScore = 0;
+    private int opponentScore = 0;
     private int myScore = 0;
 
-    private boolean puckOnScreen;
+    private Text myScoreText;
+    private Text opponentScoreText;
+
+    private ScoreCircle[] myCircles;
+    private ScoreCircle[] oppnentCircles;
 
     @Override
     public void createScene() {
@@ -66,6 +77,8 @@ public class GameScene extends BaseScene  implements IOnAreaTouchListener,IOnSce
 
         playerType =  mActivity.getPlayerType();
 
+
+        createHUD();
         createBackground();
         createPhysics();
         createWalls();
@@ -94,7 +107,10 @@ public class GameScene extends BaseScene  implements IOnAreaTouchListener,IOnSce
                 if (puck.getY() + puck.getHeight() / 2 < 0) {
 
                     mActivity.sendScoreUpdate();
-                    oppenentScore++;
+                    opponentScore++;
+                    opponentScoreText.setText(String.valueOf(opponentScore));
+                    oppnentCircles[opponentScore - 1].setColor(SCORE_CIRCLE_ON);
+
                     puck.resetPosition();
 
                 }
@@ -144,22 +160,20 @@ public class GameScene extends BaseScene  implements IOnAreaTouchListener,IOnSce
                 ResourceManager.getInstance().mVertexBufferObjectManager, physicsWorld);
 
         malletBody = mallet.body;
-
         if(playerType == TYPE_SERVER) {
 
-            puckOnScreen = true;
 
             puck = new Puck(CAM_WIDTH / 2, CAM_HEIGHT / 2, ResourceManager.getInstance().puck_region,
                     ResourceManager.getInstance().mVertexBufferObjectManager, physicsWorld);
 
         } else {
 
-            puckOnScreen = false;
 
             puck = new Puck(CAM_WIDTH / 2,   CAM_HEIGHT + CAM_HEIGHT / 10 , ResourceManager.getInstance().puck_region,
                     ResourceManager.getInstance().mVertexBufferObjectManager, physicsWorld);
 
         }
+
 
         puckBody = puck.body;
 
@@ -168,6 +182,46 @@ public class GameScene extends BaseScene  implements IOnAreaTouchListener,IOnSce
 
         this.registerTouchArea(mallet);
         this.setTouchAreaBindingOnActionDownEnabled(true);
+    }
+
+    private void createHUD(){
+
+        myCircles = new ScoreCircle[MAX_SCORE];
+        oppnentCircles = new ScoreCircle[MAX_SCORE];
+
+        loadScoreIndicator();
+
+        float myScorePosition = (myCircles[0].getX() + myCircles[myCircles.length -1].getX()) / 2;
+        float opponentScorePosition = (oppnentCircles[0].getX() + oppnentCircles[oppnentCircles.length -1].getX()) / 2;
+
+        myScoreText = new Text(myScorePosition, CAM_HEIGHT - (2* MARGIN_OUTER) , ResourceManager.getInstance().gameScoreFont, "0", ResourceManager.getInstance().mVertexBufferObjectManager);
+        opponentScoreText = new Text(opponentScorePosition , CAM_HEIGHT - (2* MARGIN_OUTER) , ResourceManager.getInstance().gameScoreFont, "0", ResourceManager.getInstance().mVertexBufferObjectManager);
+
+        this.attachChild(myScoreText);
+        this.attachChild(opponentScoreText);
+
+    }
+
+    private void loadScoreIndicator(){
+
+        for (int i = 0 ; i < myCircles.length ; i++){
+
+            myCircles[i] = new ScoreCircle(((i+1)* MARGIN_OUTER),CAM_HEIGHT - MARGIN_OUTER,
+                    ResourceManager.getInstance().score_circle_region,mEngine.getVertexBufferObjectManager());
+
+            attachChild(myCircles[i]);
+        }
+
+        for (int i = oppnentCircles.length - 1 ; i >= 0 ; i--){
+
+            oppnentCircles[i] = new ScoreCircle((CAM_WIDTH - ((oppnentCircles.length - i)* MARGIN_OUTER)),
+                    CAM_HEIGHT - MARGIN_OUTER,ResourceManager.getInstance().score_circle_region,mEngine.getVertexBufferObjectManager());
+
+            attachChild(oppnentCircles[i]);
+
+        }
+
+
     }
 
     @Override
@@ -255,6 +309,9 @@ public class GameScene extends BaseScene  implements IOnAreaTouchListener,IOnSce
     public void updateScore(){
 
         myScore++;
+        myScoreText.setText(String.valueOf(myScore));
+        myCircles[myScore-1].setColor(SCORE_CIRCLE_ON);
     }
+
 
 }

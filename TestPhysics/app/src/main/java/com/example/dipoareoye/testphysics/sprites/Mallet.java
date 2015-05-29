@@ -22,7 +22,6 @@ public class Mallet extends Sprite {
     private Vector2 startPosition;
     private PhysicsWorld physicsWorld;
 
-
     public Mallet(float pX, float pY, ITextureRegion pTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager , PhysicsWorld physicsWorld) {
         super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
 
@@ -35,7 +34,6 @@ public class Mallet extends Sprite {
         body.setUserData(USER_MALLET);
 
         }
-
 
     public void resetPosition() {
 

@@ -13,7 +13,17 @@ public class Const {
     public static final int CAM_WIDTH = 480;
     public static final int CAM_HEIGHT = 800;
 
+    public static final int MARGIN_OUTER = CAM_WIDTH  / 22;
+    public static final int MARGIN_INNER = CAM_WIDTH  / 3;
+    public static final int MARGIN_VERTICAL = CAM_WIDTH  / 15;
+
+    public static final int MAX_SCORE = 7;
+
     public static final Color BG_COLOR =  new Color(0.306f,0.306f,0.384f);
+    public static final Color SCORE_CIRCLE_ON =  new Color(0.463f,0.463f,0.588f);
+    public static final Color SCORE_CIRCLE_OFF =  new Color(0.227f,0.227f,0.294f);
+
+
 
     public static final int MENU_PADDING = 90 ;
     public static final float MENU_SCALE_SELECTED = 0.48f;

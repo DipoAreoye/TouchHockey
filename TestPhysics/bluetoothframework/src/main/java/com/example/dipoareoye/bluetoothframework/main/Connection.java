@@ -218,6 +218,8 @@ public class Connection {
                 Log.d(TAG, "processMessage: Message Recieved :" );
                 mOnMsgRecievedListener.onMessageReceived(msg.getData());
                 break;
+            case MSG_UPDATE_SCORE :
+
             default:
                 break;
 
